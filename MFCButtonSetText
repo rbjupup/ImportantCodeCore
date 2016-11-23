@@ -1,0 +1,5 @@
+    //设置按钮图表
+    m_channengButton.SetImage(IDB_BITMAP1);
+    m_channengButton.SetWindowText('\0');
+    m_channengButton.SizeToContent();
+    m_channengButton.SetTooltip(_T("产能界面"));
