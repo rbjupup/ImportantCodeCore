@@ -1,7 +1,0 @@
-获得字符串后面的字符串
-TCHAR * ODBAnaly::GetDataBehindStr(TCHAR * sourcestr,TCHAR * findstr)
-{
-	TCHAR *tmpstring2;		
-	tmpstring2 = strstr(sourcestr,findstr)+strlen(findstr);
-	return tmpstring2;
-}
