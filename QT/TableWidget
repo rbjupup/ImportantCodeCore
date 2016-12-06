@@ -2,6 +2,7 @@
 setColumnCount()
 setRowCount()
 setHorizontalHeaderItem()
+setBtn(int x,int y)
 
 /*********************************************
 功能:添加行和列 
@@ -29,3 +30,13 @@ QTableWidgetItem *item = new QTableWidgetItem();
 QString text("name");
 item->setText(text);
 ui->tableWidget->setVerticalHeaderItem(0, item);
+
+/*********************************************
+功能:设置按钮
+函数:void setBtn(int x,int y)
+*********************************************/
+void setBtn(int x,int y) {
+QString text("btn");
+QTableWidgetItem *btn = new QTableWidgetItem(text);
+ui->tableWidget->setItem(x, y, btn);
+}
