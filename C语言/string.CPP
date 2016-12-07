@@ -279,19 +279,20 @@ splitStr(left.GetBuffer()," ",param);
 void splitStr(TCHAR* srcStr,TCHAR* findedStr,vector<CString> &param)
 {
 	TCHAR* TmpStr = srcStr;
-	int len = strlen(srcStr);
-	int pos = 0;
+	size_t len = strlen(srcStr);
+	size_t pos = 0;
 	while(strstr(TmpStr,findedStr) != NULL)
 	{
 		pos =len - strlen(strstr(TmpStr,findedStr));
-		ASSERT(pos != 0);
 		TmpStr[pos] ='\0';
+		if (pos != 0)
 		param.push_back(CString(srcStr));
 		TmpStr += (pos+1); 
 		srcStr = TmpStr;
 		len = strlen(TmpStr);
 	}
-
+	if(len > 0)
+		param.push_back(CString(srcStr));
 }
 /************************************************************************/
 /*						  字符串常用操作结束						    */
