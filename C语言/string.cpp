@@ -10,7 +10,9 @@ IsCStringExistSymble
 GetCStringBetweenAB
 GetNumberAfterA
 GetNumberStartN
-splitStr*/
+splitStr
+GetProfileCString
+*/
 
 
 
@@ -293,6 +295,36 @@ void splitStr(TCHAR* srcStr,TCHAR* findedStr,vector<CString> &param)
 	}
 	if(len > 0)
 		param.push_back(CString(srcStr));
+}
+/************************************************************************
+函数名称: GetProfileCString 
+函数功能: 获取前缀 
+输入参数: CString 字符串
+输出参数: 前缀
+例：
+CString prefix = GetProfileCString(def);
+***************************************************************************/
+CString GetProfileCString(const CString &strSrc)
+{
+	CString tmp = _T("");
+	int nL;
+	nL = strSrc.GetLength();
+	int nNum = 0;
+	for (int i=0;i<nL;i++)
+	{
+		char c = strSrc.GetAt(i);
+		//排除空格
+		if(c == ' ')if(tmp.GetLength() == 0)continue;
+		if ((c>='a'&&c<='z')||(c>='A'&&c<='Z')||c == '_')
+		{
+			tmp+=c;
+		}
+		else
+		{
+			break;
+		}
+	}
+	return tmp;
 }
 /************************************************************************/
 /*						  字符串常用操作结束						    */
