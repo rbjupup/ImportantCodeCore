@@ -2,7 +2,7 @@
 目录
 *************************************************************/
 函数名称 : IplImageToBitmap     (实现Opencv和GDI图像互转)
-函数名称 : IplImageToBitmap     (实现Opencv和GDI图像互转)
+函数名称 : BitmapToIplImage     (实现Opencv和GDI图像互转)
 
 
 
