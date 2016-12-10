@@ -1,13 +1,16 @@
-Ŀ¼
-FolderExist
-FileExist
-CreateAllDirectories
-FindFileSameExtension
-CreateFolder
-DelDir
-
-
-/////////////////Ŀ¼��顢�ļ���顢Ŀ¼����
+/*************************************************************
+目录
+*************************************************************/
+函数名称 : FolderExist   (判断文件夹是否存在)
+函数名称 : FileExist   (判断文件是否存在)
+函数名称 : CreateAllDirectories   (创建长路径文件夹)
+函数名称 : FindFileSameExtension   (寻找相同后缀的文件)
+函数名称 : CreateFolder   (创建文件夹)
+函数名称 : DelDir   (删除文件夹)
+函数名称 : void splitpath(TCHAR *sFilename)   (分解路径)
+	
+	
+/////////////////目录检查、文件检查、目录创建
 BOOL FolderExist(CString strPath)
 {
 	WIN32_FIND_DATA   wfd;
@@ -43,12 +46,12 @@ BOOL CreateAllDirectories(CString strDir)
 	CreateAllDirectories(strDir.Left(nFound)); 
 
 	// actual work
-	BOOL bSuccess = FALSE;//�ɹ���־
+	BOOL bSuccess = FALSE;//成功标志
 	// 	CreateDirectory(strDir,NULL); 
 	bSuccess = CreateDirectory(strDir, NULL) ? TRUE : FALSE;
 	return bSuccess;
 }
-//�����ļ�����������ͬ��׺���ļ�
+//查找文件夹中所有相同后缀的文件
 CString FindFileSameExtension(CString strPath,CString strExtension)
 {
 	CFileFind finder; 
@@ -59,10 +62,10 @@ CString FindFileSameExtension(CString strPath,CString strExtension)
 	{ 
 		finder.FindNextFile();
 		FileName = finder.GetFileName();
-		FilePath = finder.GetFilePath();								//�ļ���ȫ·�� 
+		FilePath = finder.GetFilePath();								//文件的全路径 
 		CString Exten;
 		Exten = PathFindExtension(FilePath);
-		if (strcmp(Exten,strExtension) == 0)		//��ȡ�ļ��ĺ�׺���ж��Ƿ���Ҫ�ҵĺ�׺��ͬ
+		if (strcmp(Exten,strExtension) == 0)		//获取文件的后缀并判断是否与要找的后缀相同
 		{
 			finder.Close();
 			return finder.GetFileTitle();
@@ -78,7 +81,7 @@ BOOL CreateFolder(CString strPath)
 	// 	attrib.bInheritHandle = FALSE;
 	// 	attrib.lpSecurityDescriptor = NULL;
 	// 	attrib.nLength =sizeof(SECURITY_ATTRIBUTES);
-	//���涨������Կ���ʡ�ԡ� ֱ��return ::CreateDirectory( path, NULL); ����
+	//上面定义的属性可以省略。 直接return ::CreateDirectory( path, NULL); 即可
 	return ::CreateDirectory( strPath, NULL/*&attrib*/);
 } 
 
@@ -144,3 +147,25 @@ BOOL DelDir(LPCTSTR pszDir)
 	return bRet;
 }
 
+/*************************************************************
+函数名称 : void splitpath(TCHAR *sFilename)
+函数功能 : 将文件名分解
+使用示例 :
+*************************************************************/
+void splitpath(TCHAR *sFilename) {	
+	TCHAR pstrPath[MAX_PATH];
+
+	TCHAR sFilename[MAX_PATH];
+
+	TCHAR sDrive[_MAX_DRIVE];
+
+	TCHAR sDir[_MAX_DIR];
+
+	TCHAR sFname[_MAX_FNAME];
+
+	TCHAR sExt[_MAX_EXT];
+
+	GetModuleFileName(NULL, sFilename, _MAX_PATH);
+
+	_tsplitpath_s(sFilename, sDrive, sDir, sFname, sExt);
+}
