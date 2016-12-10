@@ -3,15 +3,15 @@
 *************************************************************/
 GDI+环境初始化
 保存文件
-
-
+函数名称 : addPathtest() (路径叠加示例)
 /*************************************************************
 函数名称 : GDI+环境初始化
 使用示例 :
 *************************************************************/
 #include <gdiplus.h>
 #pragma comment (lib,"GdiPlus.lib")
-using namespace GdiPlus(点开头文件就能看到)
+using namespace Gdiplus;
+(点开头文件就能看到)
 
 //全局变量
 ULONG_PTR gdiplusToken;
@@ -71,3 +71,36 @@ USES_CONVERSION;
 m_pbitmap->Save(T2W(strBmp.GetBuffer()),&t_encoderClsid,NULL);
 strBmp.ReleaseBuffer();
  }
+
+/*************************************************************
+函数名称 : addPathtest()
+函数功能 : 路径叠加示例
+函数类型 : addPath()例程
+使用示例 :
+*************************************************************/
+void addPathtest()
+{
+	Bitmap *m_pbitmap = new Bitmap(1000,1000,PixelFormat16bppRGB555);
+	Graphics *p_graphics = Graphics::FromImage(m_pbitmap);
+	Pen pen(Color(255,0,255),2);
+	Rect rect(0,0,100,50);
+	GraphicsPath path;
+	path.AddLine(100,100,100,200);
+	path.AddLine(100,200,200,200);
+	path.AddLine(200,200,200,100);
+	path.AddLine(200,100,100,100);
+	GraphicsPath path2;
+ 	path2.AddEllipse(150,150,30,30);
+
+	path.AddPath(&path2,false);
+
+	p_graphics->FillPath(&SolidBrush(Color::White),&path);
+
+	CLSID t_encoderClsid;
+	GetEncoderClsid(L"image/bmp",&t_encoderClsid);
+	CString strBmp;
+	strBmp.Format(_T("D:\\1.bmp"));
+	USES_CONVERSION;
+	m_pbitmap->Save(T2W(strBmp.GetBuffer()),&t_encoderClsid,NULL);
+	strBmp.ReleaseBuffer();
+}
