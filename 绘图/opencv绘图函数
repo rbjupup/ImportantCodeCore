@@ -1,0 +1,22 @@
+//得到坐标的点数组
+vector<CvPoint> Cir2Points(CvPoint CenterPt, int radius, int sa, int ea)
+{
+    vector<CvPoint> path;   
+    path.push_back(CenterPt);
+    CvPoint *arcPt = new CvPoint[361];
+    CvSize CriSize;
+    CriSize.width = CriSize.height = radius;
+    if (sa > ea)
+    {
+        cvEllipse2Poly(CenterPt,CriSize,0,sa,360,arcPt,1);//开始到结束一次旋转一度，算出坐标
+        path.insert(path.end(),&arcPt[0],&arcPt[360 - sa]);
+        cvEllipse2Poly(CenterPt,CriSize,0,1,ea,arcPt,1);
+        path.insert(path.end(),&arcPt[0],&arcPt[ea - 1]);
+    }
+    else
+    {
+        cvEllipse2Poly(CenterPt,CriSize,0,sa,ea,arcPt,1);
+        path.insert(path.end(),&arcPt[0],&arcPt[ea -sa]);
+    }
+    return path
+}
