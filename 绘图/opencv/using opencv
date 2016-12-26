@@ -1,0 +1,15 @@
+//打开摄像头并设置摄像头分辨率
+int cameraNumber = 0;
+if (argc > 1)
+cameraNumber = atoi(argv[1]);
+// Get access to the camera.
+cv::VideoCapture camera;
+camera.open(cameraNumber);
+if (!camera.isOpened()) {
+std::cerr << "ERROR: Could not access the camera or video!" <<
+std::endl;
+exit(1);
+}
+// Try to set the camera resolution.
+camera.set(cv::CV_CAP_PROP_FRAME_WIDTH, 640);
+camera.set(cv::CV_CAP_PROP_FRAME_HEIGHT, 480);
