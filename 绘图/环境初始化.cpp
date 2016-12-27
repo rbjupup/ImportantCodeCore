@@ -56,6 +56,7 @@ using namespace GdiPlus(点开头文件就能看到)
 //全局变量
 ULONG_PTR gdiplusToken;
 //初始化环境
+InitCommonControls();
 GdiplusStartupInput gdiplusstartupinput;
 GdiplusStartup(&gdiplusToken, &gdiplusstartupinput, NULL);
 //释放
