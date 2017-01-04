@@ -1,0 +1,395 @@
+/********************************************************************
+**源码:
+********************************************************************/
+
+static void
+    FillConvexPoly( Mat& img, const Point* v, int npts, const void* color, int line_type, int shift )
+{
+    struct
+    {
+        int64 idx, di;
+        int64 x, dx, ye;
+    }
+    edge[2];
+
+
+    int64 delta = shift ? 1 << (shift - 1) : 0;
+    int64 i, y, imin = 0, left = 0, right = 1, x1, x2;
+    int64 edges = npts;
+    int64 xmin, xmax, ymin, ymax;
+    uchar* ptr = img.data;
+    Size size = img.size();
+    int64 pix_size = (int64)img.elemSize();
+    Point p0;
+    int64 delta1, delta2;
+
+
+    if( line_type < CV_AA )
+        delta1 = delta2 = XY_ONE >> 1;
+    else
+        delta1 = XY_ONE - 1, delta2 = 0;
+
+
+    p0 = v[npts - 1];
+    p0.x <<= XY_SHIFT - shift;
+    p0.y <<= XY_SHIFT - shift;
+
+
+    assert( 0 <= shift && shift <= XY_SHIFT );
+    xmin = xmax = v[0].x;
+    ymin = ymax = v[0].y;
+
+
+    for( i = 0; i < npts; i++ )
+    {
+        Point p = v[i];
+        if( p.y < ymin )
+        {
+            ymin = p.y;
+            imin = i;
+        }
+
+
+        ymax = std::max( ymax, p.y );
+        xmax = std::max( xmax, p.x );
+        xmin = MIN( xmin, p.x );
+
+
+        p.x <<= XY_SHIFT - shift;
+        p.y <<= XY_SHIFT - shift;
+
+
+        if( line_type <= 8 )
+        {
+            if( shift == 0 )
+            {
+                Point pt0, pt1;
+                pt0.x = p0.x >> XY_SHIFT;
+                pt0.y = p0.y >> XY_SHIFT;
+                pt1.x = p.x >> XY_SHIFT;
+                pt1.y = p.y >> XY_SHIFT;
+                Line( img, pt0, pt1, color, line_type );
+            }
+            else
+                Line2( img, p0, p, color );
+        }
+        else
+            LineAA( img, p0, p, color );
+        p0 = p;
+    }
+
+
+    xmin = (xmin + delta) >> shift;
+    xmax = (xmax + delta) >> shift;
+    ymin = (ymin + delta) >> shift;
+    ymax = (ymax + delta) >> shift;
+
+
+    if( npts < 3 || xmax < 0 || ymax < 0 || xmin >= size.width || ymin >= size.height )
+        return;
+
+
+    ymax = MIN( ymax, size.height - 1 );
+    edge[0].idx = edge[1].idx = imin;
+
+
+    edge[0].ye = edge[1].ye = y = ymin;
+    edge[0].di = 1;
+    edge[1].di = npts - 1;
+
+
+    ptr += img.step*y;
+
+
+    do
+    {
+        if( line_type < CV_AA || y < ymax || y == ymin )
+        {
+            for( i = 0; i < 2; i++ )
+            {
+                if( y >= edge[i].ye )
+                {
+                    int64 idx = edge[i].idx, di = edge[i].di;
+                    int64 xs = 0, xe, ye, ty = 0;
+
+
+                    for(;;)
+                    {
+                        ty = (v[idx].y + delta) >> shift;
+                        if( ty > y || edges == 0 )
+                            break;
+                        xs = v[idx].x;
+                        idx += di;
+                        idx -= ((idx < npts) - 1) & npts;   /* idx -= idx >= npts ? npts : 0 */
+                        edges--;
+                    }
+
+
+                    ye = ty;
+                    xs <<= XY_SHIFT - shift;
+                    xe = v[idx].x << (XY_SHIFT - shift);
+
+
+                    /* no more edges */
+                    if( y >= ye )
+                        return;
+
+
+                    edge[i].ye = ye;
+                    edge[i].dx = ((xe - xs)*2 + (ye - y)) / (2 * (ye - y));
+                    edge[i].x = xs;
+                    edge[i].idx = idx;
+                }
+            }
+        }
+
+
+        if( edge[left].x > edge[right].x )
+        {
+            left ^= 1;
+            right ^= 1;
+        }
+
+
+        x1 = edge[left].x;
+        x2 = edge[right].x;
+
+
+        if( y >= 0 )
+        {
+            int64 xx1 = (x1 + delta1) >> XY_SHIFT;
+            int64 xx2 = (x2 + delta2) >> XY_SHIFT;
+
+
+            if( xx2 >= 0 && xx1 < size.width )
+            {
+                if( xx1 < 0 )
+                    xx1 = 0;
+                if( xx2 >= size.width )
+                    xx2 = size.width - 1;
+                ICV_HLINE( ptr, xx1, xx2, color, pix_size );
+            }
+        }
+
+
+        x1 += edge[left].dx;
+        x2 += edge[right].dx;
+
+
+        edge[left].x = x1;
+        edge[right].x = x2;
+        ptr += img.step;
+    }
+    while( ++y <= ymax );
+}
+/********************************************************************
+**源码分析:
+**这个函数的功能是填充点集
+**这个函数先创建了两个结构体用来临时存放每行左右两个边缘坐标的信息
+	    struct
+    	{
+        	int64 idx, di;
+        	int64 x, dx, ye;
+    	}
+    	edge[2];
+**对变量进行初始化
+**一个点集的循环
+获取xmin xmax ymin ymax
+获取imin(最低点序号)
+绘制轮廓直线
+**一个从ymin到ymax的循环
+计算 当前行的最左填充点和最右填充点
+调用行填充进行填充
+********************************************************************/
+
+static void
+    FillConvexPoly( Mat& img, const Point* v, int npts, const void* color, int line_type, int shift )
+{
+//每行需要填充的左右两个点信息
+    struct
+    {
+        int64 idx, di;
+        int64 x, dx, ye;
+    }
+    edge[2];
+
+//delta:舍入误差     如果数据都被左移了,那么则delta = 011111111即只要后面有数字就会进位
+    int64 delta = shift ? 1 << (shift - 1) : 0;
+//y:当前处理的列
+//imin:第几个点是最低点
+//left right左边还是右边缘
+    int64 i, y, imin = 0, left = 0, right = 1, x1, x2;
+//edges:点的数目
+    int64 edges = npts;
+//所有点的最大最小值
+    int64 xmin, xmax, ymin, ymax;
+//指向图像数据
+    uchar* ptr = img.data;
+//图片外框大小
+    Size size = img.size();
+//图片的通道数
+    int64 pix_size = (int64)img.elemSize();
+起始点
+    Point p0;
+
+    int64 delta1, delta2;
+
+//判断线的类型,修改舍入误差
+    if( line_type < CV_AA )//CV_AA查补模式
+        delta1 = delta2 = XY_ONE >> 1;
+    else
+        delta1 = XY_ONE - 1, delta2 = 0;
+
+//初始化p0为最后一个点
+    p0 = v[npts - 1];
+    p0.x <<= XY_SHIFT - shift;
+    p0.y <<= XY_SHIFT - shift;
+
+//初始化xmin等
+    assert( 0 <= shift && shift <= XY_SHIFT );
+    xmin = xmax = v[0].x;
+    ymin = ymax = v[0].y;
+
+
+    for( i = 0; i < npts; i++ )
+    {
+        Point p = v[i];
+        if( p.y < ymin )//获取最低点位置
+        {
+            ymin = p.y;
+            imin = i;
+        }
+
+
+        ymax = std::max( ymax, p.y );
+        xmax = std::max( xmax, p.x );
+        xmin = MIN( xmin, p.x );
+
+
+        p.x <<= XY_SHIFT - shift;
+        p.y <<= XY_SHIFT - shift;
+
+
+        if( line_type <= 8 )
+        {
+            if( shift == 0 )
+            {
+                Point pt0, pt1;
+                pt0.x = p0.x >> XY_SHIFT;
+                pt0.y = p0.y >> XY_SHIFT;
+                pt1.x = p.x >> XY_SHIFT;
+                pt1.y = p.y >> XY_SHIFT;
+                Line( img, pt0, pt1, color, line_type );
+            }
+            else
+                Line2( img, p0, p, color );
+        }
+        else
+            LineAA( img, p0, p, color );
+        p0 = p;
+    }
+
+
+    xmin = (xmin + delta) >> shift;
+    xmax = (xmax + delta) >> shift;
+    ymin = (ymin + delta) >> shift;
+    ymax = (ymax + delta) >> shift;
+
+
+    if( npts < 3 || xmax < 0 || ymax < 0 || xmin >= size.width || ymin >= size.height )
+        return;
+
+//初始化边缘
+    ymax = MIN( ymax, size.height - 1 );
+    edge[0].idx = edge[1].idx = imin;
+
+
+    edge[0].ye = edge[1].ye = y = ymin;
+    edge[0].di = 1;
+    edge[1].di = npts - 1;
+
+
+    ptr += img.step*y;
+
+
+    do
+    {
+        if( line_type < CV_AA || y < ymax || y == ymin )//计算边缘
+        {
+            for( i = 0; i < 2; i++ )
+            {
+                if( y >= edge[i].ye )
+                {
+                    int64 idx = edge[i].idx, di = edge[i].di;
+                    int64 xs = 0, xe, ye, ty = 0;
+
+
+                    for(;;)
+                    {
+                        ty = (v[idx].y + delta) >> shift;
+                        if( ty > y || edges == 0 )
+                            break;
+                        xs = v[idx].x;
+                        idx += di;
+                        idx -= ((idx < npts) - 1) & npts;   /* idx -= idx >= npts ? npts : 0 */
+                        edges--;
+                    }
+
+
+                    ye = ty;
+                    xs <<= XY_SHIFT - shift;
+                    xe = v[idx].x << (XY_SHIFT - shift);
+
+
+                    /* no more edges */
+                    if( y >= ye )
+                        return;
+
+
+                    edge[i].ye = ye;
+                    edge[i].dx = ((xe - xs)*2 + (ye - y)) / (2 * (ye - y));
+                    edge[i].x = xs;
+                    edge[i].idx = idx;
+                }
+            }
+        }
+
+
+        if( edge[left].x > edge[right].x )
+        {
+            left ^= 1;
+            right ^= 1;
+        }
+
+
+        x1 = edge[left].x;
+        x2 = edge[right].x;
+
+
+        if( y >= 0 )
+        {
+            int64 xx1 = (x1 + delta1) >> XY_SHIFT;
+            int64 xx2 = (x2 + delta2) >> XY_SHIFT;
+
+//算完了,进行填充
+            if( xx2 >= 0 && xx1 < size.width )
+            {
+                if( xx1 < 0 )
+                    xx1 = 0;
+                if( xx2 >= size.width )
+                    xx2 = size.width - 1;
+                ICV_HLINE( ptr, xx1, xx2, color, pix_size );
+            }
+        }
+
+//更新边缘数据
+        x1 += edge[left].dx;
+        x2 += edge[right].dx;
+
+
+        edge[left].x = x1;
+        edge[right].x = x2;
+        ptr += img.step;
+    }
+    while( ++y <= ymax );
+}
