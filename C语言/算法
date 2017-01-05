@@ -1,0 +1,32 @@
+/**********************************************************************
+目录
+**********************************************************************/
+void LinearInterpolation(int &X, int &Y, int &F,int &EndJudge, int &XE, int &YE)
+
+
+/**********************************************************************
+直线插补
+使用示例:
+    int X = -30,Y = -50,XE = 100 , YE = 100;
+    int EndJudge = abs(XE - X) + abs(YE - Y);
+    int F = 0;XE -= X; YE -= Y;
+    while(EndJudge > 0) {
+        LinearInterpolation(X, Y, F, EndJudge, XE, YE);
+        TRACE("%d,%d\n",X,Y);
+    }
+**********************************************************************/
+void LinearInterpolation(int &X, int &Y, int &F,int &EndJudge, int &XE, int &YE){
+    if(F >= 0 ){
+        XE >= 0 ? X += 1:X -= 1;
+        YE >= 0 ? F = F - YE : F = F + YE;
+        EndJudge -=1;
+        if(EndJudge == 0)return;
+        LinearInterpolation(X, Y, F, EndJudge, XE, YE);
+    }
+    else {
+        YE >= 0 ? Y += 1 : Y -= 1;
+        XE >= 0 ? F = F + XE : F = F - XE;
+        EndJudge -=1;
+        return;
+    }
+}
