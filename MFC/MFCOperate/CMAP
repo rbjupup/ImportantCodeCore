@@ -1,0 +1,15 @@
+遇到好几个人说CMap在用CString做key类型时有问题，说用int和DWORD就可以，用CString就不行。因此很多人推荐使用MFC中的CMapStringToPtr之类。
+
+看下面的代码：
+    CMap<CString, LPCTSTR, int, int> typeMap;
+    typeMap.SetAt(_T("ONE"),1);
+    typeMap.SetAt(_T("TWO"),2);
+
+    int nValue = 0;
+    BOOL ret = typeMap.Lookup(_T("ONE"), nValue);
+    ret = typeMap.Lookup(_T("THREE"), nValue);
+    ret = typeMap.Lookup(_T("TWO"), nValue);
+我的代码运行的很好，我觉得关键是ARG_KEY要选LPCTSTR
+
+
+本文来自CSDN博客，转载请标明出处：http://blog.csdn.net/flyingxu/archive/2005/12/26/562852.aspx
