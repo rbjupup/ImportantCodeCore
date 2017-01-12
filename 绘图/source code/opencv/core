@@ -1,0 +1,39 @@
+template<typename T, typename WT> static void
+addWeighted_( const T* src1, size_t step1, const T* src2, size_t step2,
+              T* dst, size_t step, Size size, void* _scalars )
+
+
+
+template<typename T, typename WT> static void
+addWeighted_( const T* src1, size_t step1, const T* src2, size_t step2,
+              T* dst, size_t step, Size size, void* _scalars )
+{
+//将传入的指针转换为double数组
+    const double* scalars = (const double*)_scalars;
+    //将数组中的数据取出来,分别是图片1的权重,2的权重,偏移量
+    WT alpha = (WT)scalars[0], beta = (WT)scalars[1], gamma = (WT)scalars[2];
+    
+    //根据step和像素的大小,算出一行(4的倍数结尾,不够用0补齐)有多少个像素
+    step1 /= sizeof(src1[0]);
+    step2 /= sizeof(src2[0]);
+    step /= sizeof(dst[0]);
+
+    for( ; size.height--; src1 += step1, src2 += step2, dst += step )
+    {
+        int x = 0;
+        //倒数4字节之前都用公式相加
+        for( ; x <= size.width - 4; x += 4 )
+        {
+            T t0 = saturate_cast<T>(src1[x]*alpha + src2[x]*beta + gamma);
+            T t1 = saturate_cast<T>(src1[x+1]*alpha + src2[x+1]*beta + gamma);
+            dst[x] = t0; dst[x+1] = t1;
+
+            t0 = saturate_cast<T>(src1[x+2]*alpha + src2[x+2]*beta + gamma);
+            t1 = saturate_cast<T>(src1[x+3]*alpha + src2[x+3]*beta + gamma);
+            dst[x+2] = t0; dst[x+3] = t1;
+        }
+        //最后由于不一定是4的整数倍,所以最后要加加
+        for( ; x < size.width; x++ )
+            dst[x] = saturate_cast<T>(src1[x]*alpha + src2[x]*beta + gamma);
+    }
+}
