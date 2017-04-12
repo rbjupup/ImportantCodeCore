@@ -1,0 +1,71 @@
+1.先建立一个对话框MFC应用程序，然后在工具箱里面把Tab Control控件放到对话框中的合适位置上。
+
+再在对话框类中，声明一个CTabCtrl变量：
+
+CTabCtrl m_tab;
+
+变量m_tab用来与对话框中的Tab Control控件交互，为此要在DoDataExchange函数中加入DDX_Control语句：
+
+DDX_Control(pDX, IDC_TAB1, m_tab);
+
+IDC_TAB1是Tab Control控件的ID。
+
+2.建立两个对话框程序，用来当做Tab Control控件的两个页。别忘了把Style改为Child，Border改为None。然后就可以在上面加其他控件了。
+
+接着分别为这两个对话框建立两个类，比如CPage1和CPage2。
+
+然后在对话框类头文件中，加入这两个对话框对象。同时增加一个变量int m_CurSelTab，用了表明是哪个Page即将被切换。
+
+int m_CurSelTab; 
+CPage1 m_page1; 
+CPage2 m_page2; 
+CDialog* pDialog[2];  //用来保存对话框对象指针
+
+在对话框类的初始化函数中需要把CPage1、CPage2和Tab Control关联起来，并保存页面地址，设置初始页面。
+
+//为Tab Control增加两个页面
+m_tab.InsertItem(0, _T("Farm"));
+m_tab.InsertItem(1, _T("Note"));
+ 
+//创建两个对话框
+m_page1.Create(IDD_DIALOG1, &m_tab);
+m_page2.Create(IDD_DIALOG2, &m_tab);
+//设定在Tab内显示的范围
+CRect rc;
+m_tab.GetClientRect(rc);
+rc.top += 20;
+rc.bottom -= 0;
+rc.left += 0;
+rc.right -= 0;
+m_page1.MoveWindow(&rc);
+m_page2.MoveWindow(&rc);
+ 
+//把对话框对象指针保存起来
+pDialog[0] = &m_page1;
+pDialog[1] = &m_page2;
+//显示初始页面
+pDialog[0]->ShowWindow(SW_SHOW);
+pDialog[1]->ShowWindow(SW_HIDE);
+//保存当前选择
+m_CurSelTab = 0;
+这里我们用了一个CDialog指针数组来进行保存Tab Control的每个页，数组的大小是Tab Control页面的个数，数组下标对应着每个页面的索引（这样方便快速存取）。
+
+接下来，为Tab Control添加消息处理程序：
+
+ON_NOTIFY(TCN_SELCHANGE, IDC_TAB1, &CTabDlg::OnTcnSelchangeTab1)
+
+void CTabDlg::OnTcnSelchangeTab1(NMHDR *pNMHDR, LRESULT *pResult)
+{
+    //把当前的页面隐藏起来
+    pDialog[m_CurSelTab]->ShowWindow(SW_HIDE);
+    //得到新的页面索引
+    m_CurSelTab = m_tab.GetCurSel();
+    //把新的页面显示出来
+    pDialog[m_CurSelTab]->ShowWindow(SW_SHOW);
+    *pResult = 0;
+}
+ 
+3.如果要在Tab Control控件外面获取其内部对话框中控件的数据，就需要使用DDX/DDV机制，还要调用相应的UpdateData函数。
+
+    m_page1.UpdateData(); 
+    m_page2.UpdateData();
